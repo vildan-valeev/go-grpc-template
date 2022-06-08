@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS public.item CASCADE;
+DROP TABLE IF EXISTS public.category CASCADE;
+
+END;
