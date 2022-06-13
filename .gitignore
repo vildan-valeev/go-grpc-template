@@ -88,4 +88,4 @@ fabric.properties
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-/app/build/
+/app/build/go_build_main_go

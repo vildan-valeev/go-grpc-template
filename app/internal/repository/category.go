@@ -2,100 +2,96 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"go-bolvanka/internal/domain"
-	"go-bolvanka/pkg/logging"
-	"go-bolvanka/pkg/postgres"
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
+	"go-bolvanka/internal/domain/models"
+	"go-bolvanka/pkg/database"
 )
 
 type CategoryRepository struct {
-	pg     *postgres.Postgres
-	logger *logging.Logger
+	*database.DB
 }
 
-func NewCategoryRepository(pg *postgres.Postgres, logger *logging.Logger) *CategoryRepository {
-	return &CategoryRepository{pg: pg, logger: logger}
+func NewCategoryRepository(db *database.DB) *CategoryRepository {
+	return &CategoryRepository{db}
 }
 
-func (r *CategoryRepository) GetAll(ctx context.Context) ([]domain.Category, error) {
-	// формируем sql запрос через Builder
-	sql, _, err := r.pg.Builder.
-		Select("id, name").
-		From("category").
-		ToSql()
-	r.logger.Info(fmt.Sprintf("SQL Query: %s", sql))
-	// проверяем составленный запрос
+func (s *CategoryRepository) Insert(ctx context.Context, category models.Category) error {
+	tx, err := s.Pool().Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("CategoryRepository - GetAll - r.pg.Builder: %w", err)
+		return err
 	}
-	// заходим в Pool, делаем запрос
-	rows, err := r.pg.Pool.Query(ctx, sql)
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	if err := s.insertCategory(ctx, category, tx); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (s *CategoryRepository) insertCategory(ctx context.Context, category models.Category, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `INSERT INTO category (name) VALUES ($1)`, category.Name)
 	if err != nil {
-		return nil, fmt.Errorf("CategoryRepository - GetAll - r.Pool.Query: %w", err)
+		return err
 	}
-	// закрытие по выходу из функции
+
+	return nil
+}
+
+func (s *CategoryRepository) List(ctx context.Context) ([]*models.Category, error) {
+
+	sql := `SELECT id, name FROM category`
+
+	rows, err := s.Pool().Query(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
-	// распарсиваем записи в сущности
-	entities := make([]domain.Category, 0, _defaultEntityCap)
+
+	ordersModel, err := s.fetch(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return ordersModel, nil
+}
+func (s *CategoryRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*models.Category, error) {
+	categories := make([]*models.Category, 0)
 
 	for rows.Next() {
-		e := domain.Category{}
+		var category models.Category
 
-		err = rows.Scan(&e.ID, &e.Name)
-		if err != nil {
-			return nil, fmt.Errorf("TranslationRepo - GetHistory - rows.Scan: %w", err)
+		if err := rows.Scan(
+			&category.ID,
+			&category.Name,
+		); err != nil {
+			return nil, err
 		}
 
-		entities = append(entities, e)
+		categories = append(categories, &category)
 	}
 
-	return entities, nil
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return categories, nil
 }
 
-//func (r *CategoryRepository) Post(ctx context.Context, category *category.Category) error {
-//	q := `
-//		INSERT INTO author
-//		    (name, age)
-//		VALUES
-//		       ($1, $2)
-//		RETURNING id
-//	`
-//	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
-//	if err := r.client.QueryRow(ctx, q, category.Name, 123).Scan(&category.ID); err != nil {
-//		var pgErr *pgconn.PgError
-//		if errors.As(err, &pgErr) {
-//			pgErr = err.(*pgconn.PgError)
-//			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-//			r.logger.Error(newErr)
-//			return newErr
-//		}
-//		return err
-//	}
-//
-//	return nil
-//}
+func (s *CategoryRepository) Get(ctx context.Context, categoryID *uuid.UUID) (*models.Category, error) {
+	var category models.Category
 
-//func (r *CategoryRepository) GetOne(ctx context.Context, id string) (category.Category, error) {
-//	q := `
-//		SELECT id, name FROM public.author WHERE id = $1
-//	`
-//	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
-//
-//	var ath category.Category
-//	err := r.client.QueryRow(ctx, q, id).Scan(&ath.ID, &ath.Name)
-//	if err != nil {
-//		return category.Category{}, err
-//	}
-//
-//	return ath, nil
-//}
-//
-//func (r *CategoryRepository) Update(ctx context.Context, category category.Category) error {
-//	//TODO implement me
-//	panic("implement me")
-//}
-//
-//func (r *CategoryRepository) Delete(ctx context.Context, id string) error {
-//
-//	panic("implement me")
-//}
+	sql := `SELECT id, name FROM category WHERE id = $1`
+
+	if err := pgxscan.Get(ctx, s.Pool(), &category, sql, categoryID); err != nil {
+		return nil, err
+	}
+
+	return &category, nil
+}

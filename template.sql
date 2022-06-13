@@ -3,15 +3,15 @@ DROP TABLE IF EXISTS item CASCADE;
 
 
 CREATE TABLE public.category (
-                                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                                 name VARCHAR(100) NOT NULL
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE public.item (
-                             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                             name VARCHAR(100) NOT NULL,
-                             category_id UUID NOT NULL,
-                             CONSTRAINT category_fk FOREIGN KEY (category_id) REFERENCES public.category(id)
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    category_id UUID NOT NULL,
+    CONSTRAINT category_fk FOREIGN KEY (category_id) REFERENCES public.category(id)
 );
 
 INSERT INTO category (id, name) VALUES ('707f69e0-edac-4c3e-bb7f-918d3f190e19', 'Народ');

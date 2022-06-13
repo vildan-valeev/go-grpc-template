@@ -2,139 +2,98 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"go-bolvanka/internal/domain"
-	"go-bolvanka/pkg/logging"
-	"go-bolvanka/pkg/postgres"
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
+	"go-bolvanka/internal/domain/models"
+	"go-bolvanka/pkg/database"
 )
 
 type ItemRepository struct {
-	pg     *postgres.Postgres
-	logger *logging.Logger
+	*database.DB
 }
 
-func NewItemRepository(pg *postgres.Postgres, logger *logging.Logger) *ItemRepository {
-	return &ItemRepository{pg: pg, logger: logger}
+func NewItemRepository(db *database.DB) *ItemRepository {
+	return &ItemRepository{db}
 }
 
-// GetAll Получение всех записей в базе данных
-func (r *ItemRepository) GetAll(ctx context.Context) ([]domain.Item, error) {
-	// формируем sql запрос через Builder
-	sql, _, err := r.pg.Builder.
-		Select("id, name").
-		From("category").
-		ToSql()
-	r.logger.Info(fmt.Sprintf("SQL Query: %s", sql))
-	// проверяем составленный запрос
+func (s *ItemRepository) Insert(ctx context.Context, item models.Item) error {
+	tx, err := s.Pool().Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("CategoryRepository - GetAll - r.pg.Builder: %w", err)
+		return err
 	}
-	// заходим в Pool, делаем запрос
-	rows, err := r.pg.Pool.Query(ctx, sql)
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	if err := s.insertItem(ctx, item, tx); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (s *ItemRepository) insertItem(ctx context.Context, item models.Item, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `INSERT INTO item (name) VALUES ($1)`, item.Name)
 	if err != nil {
-		return nil, fmt.Errorf("CategoryRepository - GetAll - r.Pool.Query: %w", err)
+		return err
 	}
-	// закрытие по выходу из функции
+
+	return nil
+}
+
+func (s *ItemRepository) List(ctx context.Context) ([]*models.Item, error) {
+
+	sql := `SELECT id, name FROM item`
+
+	rows, err := s.Pool().Query(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
-	// распарсиваем записи в сущности
-	entities := make([]domain.Item, 0, _defaultEntityCap)
+
+	itemsModel, err := s.fetch(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return itemsModel, nil
+}
+
+func (s *ItemRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*models.Item, error) {
+	items := make([]*models.Item, 0)
 
 	for rows.Next() {
-		e := domain.Item{}
+		var item models.Item
 
-		err = rows.Scan(&e.ID, &e.Name)
-		if err != nil {
-			return nil, fmt.Errorf("TranslationRepo - GetHistory - rows.Scan: %w", err)
+		if err := rows.Scan(
+			&item.ID,
+			&item.Name,
+		); err != nil {
+			return nil, err
 		}
 
-		entities = append(entities, e)
+		items = append(items, &item)
 	}
 
-	return entities, nil
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return items, nil
 }
 
-// Post Создание записи в базе данных
-//func (r ItemRepository) Post(ctx context.Context, item *item.Item) error {
-//	im.ID = user.ID
-//
-//	model := toModel(bm)
-//
-//	res, err := r.db.InsertOne(ctx, model)
-//	if err != nil {
-//		return err
-//	}
-//
-//	bm.ID = res.InsertedID.(primitive.ObjectID).Hex()
-//	return nil
-//}
+func (s *ItemRepository) Get(ctx context.Context, itemID *uuid.UUID) (*models.Item, error) {
+	var item models.Item
 
-//// GetOne Получение всех записей в базе данных
-//func (r ItemRepository) GetOne(ctx context.Context, id string) (item.Item, error) {
-//	q := `
-//		SELECT id, name, age FROM public.book;
-//	`
-//
-//	rows, err := r.client.Query(ctx, q)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	books := make([]book.Book, 0)
-//
-//	for rows.Next() {
-//		var bk Book
-//
-//		err = rows.Scan(&bk.ID, &bk.Name, &bk.Age)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		books = append(books, bk.ToDomain())
-//	}
-//
-//	if err = rows.Err(); err != nil {
-//		return nil, err
-//	}
-//
-//	return books, nil
-//}
-//
-//// Update Получение всех записей в базе данных
-//func (r ItemRepository) Update(ctx context.Context, category item.Item) error {
-//	q := `
-//		SELECT id, name, age FROM public.book;
-//	`
-//
-//	rows, err := r.client.Query(ctx, q)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	books := make([]book.Book, 0)
-//
-//	for rows.Next() {
-//		var bk Book
-//
-//		err = rows.Scan(&bk.ID, &bk.Name, &bk.Age)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		books = append(books, bk.ToDomain())
-//	}
-//
-//	if err = rows.Err(); err != nil {
-//		return nil, err
-//	}
-//
-//	return books, nil
-//}
-//
-//// Delete Удаление строки из базы данных
-//func (r ItemRepository) Delete(ctx context.Context, id string) error {
-//	objID, _ := primitive.ObjectIDFromHex(id)
-//	uID, _ := primitive.ObjectIDFromHex(user.ID)
-//
-//	_, err := r.db.DeleteOne(ctx, bson.M{"_id": objID, "userId": uID})
-//	return err
-//}
+	sql := `SELECT id, name FROM item WHERE id = $1`
+
+	if err := pgxscan.Get(ctx, s.Pool(), &item, sql, itemID); err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+
+}

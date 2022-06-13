@@ -1,7 +1,9 @@
-package domain
+package models
+
+import "github.com/google/uuid"
 
 type Item struct {
-	ID         string     `json:"id"`
+	ID         uuid.UUID  `json:"id"`
 	Name       string     `json:"name"`
 	Categories []Category `json:"categories"`
 }

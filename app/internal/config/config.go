@@ -1,64 +1,27 @@
 package config
 
 import (
-	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/caarlos0/env/v6"
+	"github.com/rs/zerolog/log"
+	"go-bolvanka/pkg/database"
 )
 
-type (
-	// Config -.
-	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
-		RMQ  `yaml:"rabbitmq"`
-	}
+type Config struct {
+	LogLevel string `env:"LOGLEVEL,required" envDefault:"debug"` // debug, info, warn, error, fatal, ""
+	IP       string `env:"IP,required" envDefault:"0.0.0.0"`
+	HTTPPort string `env:"HTTP_PORT,required" envDefault:"8000"`
+	BaseURL  string `env:"BASE_URL,required" envDefault:"http://localhost"`
 
-	// App -.
-	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
-	}
+	Database database.Config
+}
 
-	// HTTP -.
-	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
-	}
-
-	// Log -.
-	Log struct {
-		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
-	}
-
-	// PG -.
-	PG struct {
-		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
-		URL     string `env-required:"true"                 env:"PG_URL"`
-	}
-
-	// RMQ -.
-	RMQ struct {
-		ServerExchange string `env-required:"true" yaml:"rpc_server_exchange" env:"RMQ_RPC_SERVER"`
-		ClientExchange string `env-required:"true" yaml:"rpc_client_exchange" env:"RMQ_RPC_CLIENT"`
-		URL            string `env-required:"true"                            env:"RMQ_URL"`
-	}
-)
-
-// NewConfig returns app config.
-func NewConfig() (*Config, error) {
+// New создает экземпляр Config и заполняет его значениями переменных окружения.
+func New() *Config {
 	cfg := &Config{}
 
-	err := cleanenv.ReadConfig("./internal/config/config.yml", cfg)
-	if err != nil {
-		//log.Warn("")
-		return nil, fmt.Errorf("config error: %w", err)
+	if err := env.Parse(cfg); err != nil {
+		log.Fatal().Err(err).Msg("parse env")
 	}
 
-	err = cleanenv.ReadEnv(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	return cfg
 }
