@@ -1,0 +1,21 @@
+version: "3.3"
+
+services:
+  protoc-all:
+    image: namely/protoc-all:latest
+    command:
+      -d proto
+      -o app/internal/transport/grpc/proto
+      -l go
+    volumes:
+      - ./:/defs
+
+#Где:
+#
+#  -o - директория, куда будут скомпилированы proto stubs.
+#
+#  -i - путь к сторонним зависимостям, в нашем случае googleapis
+#
+#  -l - ЯП, в нашем случае Golang (go)
+#
+#  флаг --with-gateway, для генерации RESTful API

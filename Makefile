@@ -35,3 +35,6 @@ migrate.up:
 
 local_db_up:
 	docker-compose up --build
+
+gen_proto:
+	docker-compose -f docker-compose.proto.yml up
