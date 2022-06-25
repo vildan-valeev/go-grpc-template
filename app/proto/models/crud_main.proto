@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package generated;
+option go_package = "app/proto/generated;generated";
+
+//import "category.proto";
+//import "item.proto";
+
+
+service CRUD {
+  // Создание Категории
+  rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse) {}
+
+  // Получение Категории
+  rpc ReadCategory (ReadCategoryRequest) returns (Category) {}
+
+  //  rpc UpdateCategory (CategoryInput) returns (CategoryResponse) {}
+  //  rpc DeleteCategory (ID) returns (CategoryResponse) {}
+
+  // Получение списка Категорий
+  rpc ListCategories (ListCategoryRequest) returns (ListCategoryResponse) {}
+
+  // Создание Заказа
+  rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
+  // Получение Заказа
+
+  rpc ReadItem (ReadItemRequest) returns (Item) {}
+
+  //  rpc UpdateItem (ItemInput) returns (ItemResponse) {}
+  //  rpc DeleteItem (ID) returns (ItemResponse) {}
+
+  // Получение списка Заказов
+  rpc ListItem (ListItemRequest) returns (ListItemResponse) {}
+}
+
+message CreateCategoryRequest {
+  Category category = 1;
+}
+message CreateCategoryResponse {
+  string categoryId = 1;
+}
+message ReadCategoryRequest {
+  string categoryId = 1;
+}
+//message ReadCategoryResponse {
+//  Category category = 1;
+//}
+message ListCategoryRequest {
+}
+message ListCategoryResponse {
+  repeated Category categories = 1;
+}
+
+message CreateItemRequest {
+  Item item = 1;
+}
+message CreateItemResponse {
+  string itemId = 1;
+  repeated string errors = 2;
+}
+message ReadItemRequest {
+  string itemId = 1;
+}
+//message ReadItemResponse {
+//  Item item = 1;
+//}
+message ListItemRequest {
+}
+message ListItemResponse {
+  repeated Item items = 1;
+}
+
+
+// Заказ
+message Item {
+  // ID заказа
+  string id = 1;
+  // название заказа
+  string name = 2;
+  // категория заказа
+  string category_id = 3;
+}
+
+// Категория
+message Category {
+  // ID категории
+  string id = 1;
+  // название категории
+  string name = 2;
+}

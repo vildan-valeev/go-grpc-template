@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"github.com/google/uuid"
-	"go-bolvanka/internal/domain/models"
-	"go-bolvanka/internal/repository"
+	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/repository"
 )
 
 /*
@@ -13,17 +13,29 @@ import (
 
 */
 
-type Category interface {
-	Create(ctx context.Context, category models.Category) error
-	GetByID(ctx context.Context, categoryID uuid.UUID) (*models.Category, error)
-	GetAll(ctx context.Context) ([]*models.Category, error)
-}
+type (
+	Category interface {
+		Create(ctx context.Context, request CreateCategoryInput) (*models.Category, error)
+		GetByID(ctx context.Context, categoryID uuid.UUID) (*models.Category, error)
+		GetAll(ctx context.Context) ([]*models.Category, error)
+	}
+	CreateCategoryInput struct {
+		ID   uuid.UUID
+		Name string
+	}
+)
 
-type Item interface {
-	Create(ctx context.Context, item models.Item) error
-	GetByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
-	GetAll(ctx context.Context) ([]*models.Item, error)
-}
+type (
+	Item interface {
+		Create(ctx context.Context, request CreateItemInput) (*models.Item, error)
+		GetByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
+		GetAll(ctx context.Context) ([]*models.Item, error)
+	}
+	CreateItemInput struct {
+		ID   uuid.UUID
+		Name string
+	}
+)
 
 type Services struct {
 	Category Category

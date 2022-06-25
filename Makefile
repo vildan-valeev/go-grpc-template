@@ -1,14 +1,15 @@
 APP_BIN = app/build/app
+PROTO_PATH = app/proto
 
 help:
-	@echo "Base commands"
-	@echo "\tmake lint\t-> \trunning linter"
-	@echo "\tmake build\t-> \tcompiling project"
-	@echo "\tmake clean\t-> \tremoving was built file"
-	@echo "\tmake swagger\t-> \tapi documentation"
+	@echo "Base commands:"
+	@echo "\tmake lint\t\t-> \trunning linter"
+	@echo "\tmake build\t\t-> \tcompiling project"
+	@echo "\tmake clean\t\t-> \tremoving was built file"
 
-	@echo "\tmake deploy\t-> \t deploy"
-	@echo "\tmake local_db_up"
+
+	@echo "\tmake deploy\t\t-> \tdeploy"
+	@echo "\tmake local_db_up \t-> \tup local db"
 
 lint:
 	golangci-lint run
@@ -21,20 +22,10 @@ $(APP_BIN):
 clean:
 	rm -rf ./app/build || true
 
-swagger:
-	swag init -g ./app/cmd/app/main.go -o ./app/docs
-
-migrate:
-	$(APP_BIN) migrate -version $(version)
-
-migrate.down:
-	$(APP_BIN) migrate -seq down
-
-migrate.up:
-	$(APP_BIN) migrate -seq up
 
 local_db_up:
 	docker-compose up --build
 
-gen_proto:
-	docker-compose -f docker-compose.proto.yml up
+.PHONY: go-proto
+go-proto:
+	@protoc -I=$(PROTO_PATH)/models --go_out=$(PROTO_PATH)/generated --go_opt=paths=source_relative --go-grpc_out=$(PROTO_PATH)/generated --go-grpc_opt=paths=source_relative $(PROTO_PATH)/models/*.proto

@@ -1,13 +1,10 @@
 package repository
 
 import (
-	"github.com/google/uuid"
-	"go-bolvanka/internal/domain/models"
-	"go-bolvanka/pkg/database"
-)
-
-import (
 	"context"
+	"github.com/google/uuid"
+	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/pkg/database"
 )
 
 /*

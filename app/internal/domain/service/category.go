@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 	"github.com/google/uuid"
-	"go-bolvanka/internal/domain/models"
-	"go-bolvanka/internal/repository"
+	"github.com/rs/zerolog/log"
+	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/repository"
 )
 
 type CategoryService struct {
@@ -18,8 +19,30 @@ func NewCategoryService(repo repository.Category) *CategoryService {
 }
 
 // Create Создание запроса на платеж.
-func (c CategoryService) Create(ctx context.Context, category models.Category) error {
-	return c.repo.Insert(ctx, category)
+func (c CategoryService) Create(ctx context.Context, request CreateCategoryInput) (*models.Category, error) {
+	//валидация и создание сущности для записи в бд
+	categoryFromRequest, err := c.NewCategoryFromRequest(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	// запрос на создание
+	if err := c.repo.Insert(ctx, *categoryFromRequest); err != nil {
+		log.Error().Err(err).Msg("insert order")
+
+		return nil, err
+	}
+	return categoryFromRequest, nil
+}
+
+// распарсиваем данные и приводим в к сущности Категория
+func (c CategoryService) NewCategoryFromRequest(ctx context.Context, input CreateCategoryInput) (*models.Category, error) {
+
+	// проверки, подгрузка значений из других моделей
+
+	return &models.Category{
+		//ID:                            uuid.New(),
+		Name: input.Name,
+	}, nil
 }
 
 // GetByID Получение запроса на платеж.

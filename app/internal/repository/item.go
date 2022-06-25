@@ -5,8 +5,8 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"go-bolvanka/internal/domain/models"
-	"go-bolvanka/pkg/database"
+	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/pkg/database"
 )
 
 type ItemRepository struct {

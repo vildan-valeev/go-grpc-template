@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rs/zerolog/log"
-	"go-bolvanka/pkg/logger/pgxadapter"
-	"go-bolvanka/pkg/logger/zerohook"
+	"go-grpc-template/pkg/logger/pgxadapter"
+	"go-grpc-template/pkg/logger/zerohook"
+
 	"time"
 
 	"github.com/jackc/pgx/v4"

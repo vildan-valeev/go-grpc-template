@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"github.com/rs/zerolog/log"
-	"go-bolvanka/internal/config"
-	"go-bolvanka/internal/domain/service"
-	"go-bolvanka/internal/repository"
-	"go-bolvanka/internal/transport/server"
-	"go-bolvanka/pkg/database"
-	"go-bolvanka/pkg/logger"
+	"go-grpc-template/internal/config"
+	"go-grpc-template/internal/domain/service"
+	"go-grpc-template/internal/repository"
+	"go-grpc-template/internal/transport/grpc/bff"
+	"go-grpc-template/internal/transport/server"
+	"go-grpc-template/pkg/database"
+	"go-grpc-template/pkg/logger"
+
 	"os"
 	"os/signal"
 	"syscall"
@@ -94,6 +96,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 
 	m.Srv = server.New(*m.Config, services)
 
+	m.Srv.CRUDService = bff.NewCRUD(services)
 	// Start the server.
 	return m.Srv.Open()
 }
