@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/domain"
 	"go-grpc-template/internal/repository"
 )
 
@@ -19,7 +19,7 @@ func NewCategoryService(repo repository.Category) *CategoryService {
 }
 
 // Create Создание запроса на платеж.
-func (c CategoryService) Create(ctx context.Context, request CreateCategoryInput) (*models.Category, error) {
+func (c CategoryService) Create(ctx context.Context, request CreateCategoryInput) (*domain.Category, error) {
 	//валидация и создание сущности для записи в бд
 	categoryFromRequest, err := c.NewCategoryFromRequest(ctx, request)
 	if err != nil {
@@ -35,23 +35,23 @@ func (c CategoryService) Create(ctx context.Context, request CreateCategoryInput
 }
 
 // распарсиваем данные и приводим в к сущности Категория
-func (c CategoryService) NewCategoryFromRequest(ctx context.Context, input CreateCategoryInput) (*models.Category, error) {
+func (c CategoryService) NewCategoryFromRequest(ctx context.Context, input CreateCategoryInput) (*domain.Category, error) {
 
 	// проверки, подгрузка значений из других моделей
 
-	return &models.Category{
+	return &domain.Category{
 		//ID:                            uuid.New(),
 		Name: input.Name,
 	}, nil
 }
 
 // GetByID Получение запроса на платеж.
-func (c CategoryService) GetByID(ctx context.Context, categoryID uuid.UUID) (*models.Category, error) {
+func (c CategoryService) GetByID(ctx context.Context, categoryID uuid.UUID) (*domain.Category, error) {
 	return c.repo.Get(ctx, &categoryID)
 }
 
 // GetAll Получение списка запросов на платеж.
-func (c CategoryService) GetAll(ctx context.Context) ([]*models.Category, error) {
+func (c CategoryService) GetAll(ctx context.Context) ([]*domain.Category, error) {
 
 	return c.repo.List(ctx)
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/rs/zerolog/log"
-	"go-grpc-template/internal/domain/models"
-	"go-grpc-template/internal/domain/service"
+	"go-grpc-template/internal/domain"
+	"go-grpc-template/internal/service"
 	errs "go-grpc-template/pkg/errors"
 	"go-grpc-template/pkg/verify"
 	pb "go-grpc-template/proto/generated"
@@ -75,7 +75,7 @@ func (s *CRUD) ListCategories(ctx context.Context, in *pb.ListCategoryRequest) (
 		return nil, GRPCError(err)
 	}
 
-	categoryList := models.Categories(categories)
+	categoryList := domain.Categories(categories)
 
 	return &pb.ListCategoryResponse{Categories: categoryList.Proto()}, nil
 }
@@ -138,7 +138,7 @@ func (s *CRUD) ListItem(ctx context.Context, in *pb.ListItemRequest) (*pb.ListIt
 		return nil, GRPCError(err)
 	}
 
-	orderList := models.Items(orders)
+	orderList := domain.Items(orders)
 
 	return &pb.ListItemResponse{Items: orderList.Proto()}, nil
 }

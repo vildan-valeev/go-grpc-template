@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/google/uuid"
-	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/domain"
 	"go-grpc-template/pkg/database"
 )
 
@@ -13,16 +13,16 @@ import (
 
 // Category - методы для работы с БД
 type Category interface {
-	Insert(ctx context.Context, c models.Category) error
-	List(ctx context.Context) ([]*models.Category, error)
-	Get(ctx context.Context, categoryID *uuid.UUID) (*models.Category, error)
+	Insert(ctx context.Context, c domain.Category) error
+	List(ctx context.Context) ([]*domain.Category, error)
+	Get(ctx context.Context, categoryID *uuid.UUID) (*domain.Category, error)
 }
 
 // Item - методы для работы с БД
 type Item interface {
-	Insert(ctx context.Context, i models.Item) error
-	List(ctx context.Context) ([]*models.Item, error)
-	Get(ctx context.Context, itemID *uuid.UUID) (*models.Item, error)
+	Insert(ctx context.Context, i domain.Item) error
+	List(ctx context.Context) ([]*domain.Item, error)
+	Get(ctx context.Context, itemID *uuid.UUID) (*domain.Item, error)
 }
 
 type Repositories struct {

@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github.com/google/uuid"
-	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/domain"
 	"go-grpc-template/internal/repository"
 )
 
@@ -15,9 +15,9 @@ import (
 
 type (
 	Category interface {
-		Create(ctx context.Context, request CreateCategoryInput) (*models.Category, error)
-		GetByID(ctx context.Context, categoryID uuid.UUID) (*models.Category, error)
-		GetAll(ctx context.Context) ([]*models.Category, error)
+		Create(ctx context.Context, request CreateCategoryInput) (*domain.Category, error)
+		GetByID(ctx context.Context, categoryID uuid.UUID) (*domain.Category, error)
+		GetAll(ctx context.Context) ([]*domain.Category, error)
 	}
 	CreateCategoryInput struct {
 		ID   uuid.UUID
@@ -27,9 +27,9 @@ type (
 
 type (
 	Item interface {
-		Create(ctx context.Context, request CreateItemInput) (*models.Item, error)
-		GetByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
-		GetAll(ctx context.Context) ([]*models.Item, error)
+		Create(ctx context.Context, request CreateItemInput) (*domain.Item, error)
+		GetByID(ctx context.Context, itemID uuid.UUID) (*domain.Item, error)
+		GetAll(ctx context.Context) ([]*domain.Item, error)
 	}
 	CreateItemInput struct {
 		ID   uuid.UUID

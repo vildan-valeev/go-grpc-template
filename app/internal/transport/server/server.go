@@ -7,7 +7,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/rs/zerolog/log"
 	"go-grpc-template/internal/config"
-	"go-grpc-template/internal/domain/service"
+	"go-grpc-template/internal/service"
 	bff "go-grpc-template/internal/transport/grpc/bff"
 	"go-grpc-template/pkg/errors"
 	"go-grpc-template/pkg/logger/grpcadapter"

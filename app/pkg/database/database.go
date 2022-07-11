@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/tern/migrate"
 	"github.com/rs/zerolog"
 )
 
@@ -21,7 +22,12 @@ var (
 )
 
 type Config struct {
-	DSN string `env:"DSN,required" envDefault:"postgres://postgres:postgres@localhost:5432/postgres"`
+	DSN                   string `env:"DSN,required" envDefault:"postgres://postgres:postgres@localhost:5432/postgres"`
+	MigrationsDir         string `env:"MIGRATION_MIGRATIONS_DIR,required" envDefault:"migrations"`
+	MigrationConfig       string `env:"MIGRATION_CONFIG" envDefault:"migrations/tern.conf"`
+	MigrationVersion      string `env:"MIGRATION_VERSION" envDefault:"last"`
+	MigrationVersionTable string `env:"MIGRATION_VERSION_TABLE" envDefault:"public.schema_version"`
+	MigrationAuto         bool   `env:"MIGRATION_AUTO" envDefault:"true"`
 }
 
 // DB represents the database connection.
@@ -75,6 +81,16 @@ func (db *DB) Open(ctx context.Context) (err error) {
 		return fmt.Errorf("unable to create connection pool: %w", err) //nolintlint:goerr113
 	}
 
+	// Start migrate.
+	if db.config.MigrationAuto {
+		conn, err := db.pool.Acquire(context.Background())
+		if err != nil {
+			db.logger.Fatal().Err(err).Msgf("Unable to acquire a database connection: %v", err)
+		}
+		db.migrate(conn.Conn())
+		conn.Release()
+	}
+
 	return nil
 }
 
@@ -89,4 +105,29 @@ func (db *DB) Close() error {
 
 func (db *DB) Pool() *pgxpool.Pool {
 	return db.pool
+}
+
+func (db *DB) migrate(conn *pgx.Conn) {
+	ctx := context.Background()
+	migrator, err := migrate.NewMigrator(ctx, conn, db.config.MigrationVersionTable)
+	if err != nil {
+		db.logger.Fatal().Err(err).Msgf("Unable to create a migrator: %v", err)
+	}
+
+	err = migrator.LoadMigrations(db.config.MigrationsDir)
+	if err != nil {
+		db.logger.Fatal().Err(err).Msgf("Unable to load migrations: %v", err)
+	}
+
+	err = migrator.Migrate(ctx)
+	if err != nil {
+		db.logger.Fatal().Err(err).Msgf("Unable to migrate: %v", err)
+	}
+
+	ver, err := migrator.GetCurrentVersion(ctx)
+	if err != nil {
+		db.logger.Fatal().Err(err).Msgf("Unable to get current schema version: %v", err)
+	}
+	db.logger.Info().Msgf("Migration done. Current schema version: %v", ver)
+
 }

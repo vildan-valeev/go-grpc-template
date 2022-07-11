@@ -5,7 +5,7 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/domain"
 	"go-grpc-template/pkg/database"
 )
 
@@ -17,7 +17,7 @@ func NewCategoryRepository(db *database.DB) *CategoryRepository {
 	return &CategoryRepository{db}
 }
 
-func (s *CategoryRepository) Insert(ctx context.Context, category models.Category) error {
+func (s *CategoryRepository) Insert(ctx context.Context, category domain.Category) error {
 	tx, err := s.Pool().Begin(ctx)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (s *CategoryRepository) Insert(ctx context.Context, category models.Categor
 	return tx.Commit(ctx)
 }
 
-func (s *CategoryRepository) insertCategory(ctx context.Context, category models.Category, tx pgx.Tx) error {
+func (s *CategoryRepository) insertCategory(ctx context.Context, category domain.Category, tx pgx.Tx) error {
 	_, err := tx.Exec(ctx, `INSERT INTO category (name) VALUES ($1)`, category.Name)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (s *CategoryRepository) insertCategory(ctx context.Context, category models
 	return nil
 }
 
-func (s *CategoryRepository) List(ctx context.Context) ([]*models.Category, error) {
+func (s *CategoryRepository) List(ctx context.Context) ([]*domain.Category, error) {
 
 	sql := `SELECT id, name FROM category`
 
@@ -61,11 +61,11 @@ func (s *CategoryRepository) List(ctx context.Context) ([]*models.Category, erro
 
 	return ordersModel, nil
 }
-func (s *CategoryRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*models.Category, error) {
-	categories := make([]*models.Category, 0)
+func (s *CategoryRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*domain.Category, error) {
+	categories := make([]*domain.Category, 0)
 
 	for rows.Next() {
-		var category models.Category
+		var category domain.Category
 
 		if err := rows.Scan(
 			&category.ID,
@@ -84,8 +84,8 @@ func (s *CategoryRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*model
 	return categories, nil
 }
 
-func (s *CategoryRepository) Get(ctx context.Context, categoryID *uuid.UUID) (*models.Category, error) {
-	var category models.Category
+func (s *CategoryRepository) Get(ctx context.Context, categoryID *uuid.UUID) (*domain.Category, error) {
+	var category domain.Category
 
 	sql := `SELECT id, name FROM category WHERE id = $1`
 

@@ -5,7 +5,7 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"go-grpc-template/internal/domain/models"
+	"go-grpc-template/internal/domain"
 	"go-grpc-template/pkg/database"
 )
 
@@ -17,7 +17,7 @@ func NewItemRepository(db *database.DB) *ItemRepository {
 	return &ItemRepository{db}
 }
 
-func (s *ItemRepository) Insert(ctx context.Context, item models.Item) error {
+func (s *ItemRepository) Insert(ctx context.Context, item domain.Item) error {
 	tx, err := s.Pool().Begin(ctx)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (s *ItemRepository) Insert(ctx context.Context, item models.Item) error {
 	return tx.Commit(ctx)
 }
 
-func (s *ItemRepository) insertItem(ctx context.Context, item models.Item, tx pgx.Tx) error {
+func (s *ItemRepository) insertItem(ctx context.Context, item domain.Item, tx pgx.Tx) error {
 	_, err := tx.Exec(ctx, `INSERT INTO item (name) VALUES ($1)`, item.Name)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (s *ItemRepository) insertItem(ctx context.Context, item models.Item, tx pg
 	return nil
 }
 
-func (s *ItemRepository) List(ctx context.Context) ([]*models.Item, error) {
+func (s *ItemRepository) List(ctx context.Context) ([]*domain.Item, error) {
 
 	sql := `SELECT id, name FROM item`
 
@@ -62,11 +62,11 @@ func (s *ItemRepository) List(ctx context.Context) ([]*models.Item, error) {
 	return itemsModel, nil
 }
 
-func (s *ItemRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*models.Item, error) {
-	items := make([]*models.Item, 0)
+func (s *ItemRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*domain.Item, error) {
+	items := make([]*domain.Item, 0)
 
 	for rows.Next() {
-		var item models.Item
+		var item domain.Item
 
 		if err := rows.Scan(
 			&item.ID,
@@ -85,8 +85,8 @@ func (s *ItemRepository) fetch(ctx context.Context, rows pgx.Rows) ([]*models.It
 	return items, nil
 }
 
-func (s *ItemRepository) Get(ctx context.Context, itemID *uuid.UUID) (*models.Item, error) {
-	var item models.Item
+func (s *ItemRepository) Get(ctx context.Context, itemID *uuid.UUID) (*domain.Item, error) {
+	var item domain.Item
 
 	sql := `SELECT id, name FROM item WHERE id = $1`
 
